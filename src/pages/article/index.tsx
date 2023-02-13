@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import * as articleS from "./styles";
+import Head from "next/head";
 
-function getYoutubeVideoId(url) {
+function getYoutubeVideoId(url: string) {
     const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
 
@@ -10,6 +12,7 @@ function getYoutubeVideoId(url) {
     }
     return null;
 }
+
 
 const App = () => {
 
@@ -23,7 +26,7 @@ const App = () => {
         console.log(response);
     }, [response]);
 
-    const handleSubmit = async (event) => {
+    const handleSubmit = async (event: { preventDefault: () => void; }) => {
         setLoading(true);
         event.preventDefault();
 
@@ -41,31 +44,31 @@ const App = () => {
             });
 
             setResponse(data);
-            
+
         } catch (error) {
-            setResponse("An error occurred.");
+            setResponse("An error occurred." + error);
         }
 
         setLoading(false);
     };
 
     return (
-        <div>
-            <form onSubmit={handleSubmit}>
-                <textarea
-                    value={message}
-                    onChange={(event) => setMessage(event.target.value)}
-                />
-                {loading ? (
-                    <button disabled>Carregando...</button>
-                ) : (
-                    <button>Enviar</button>
-                )}
-            </form>
-            <p >String length: {stringLength}</p>
-            <div className="content" dangerouslySetInnerHTML={{__html: response}}></div>
-            <p>test string <br/> test</p>
-        </div>
+        <>
+        <articleS.Container>
+            <articleS.TextArea
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+            />
+            {loading ? (
+                <articleS.Button disabled>Carregando...</articleS.Button>
+            ) : (
+                <articleS.Button onClick={handleSubmit}>Enviar</articleS.Button>
+            )}
+
+            <articleS.Content dangerouslySetInnerHTML={{ __html: response }}></articleS.Content>
+            <articleS.StringLength>String length: {stringLength}</articleS.StringLength>
+        </articleS.Container>
+        </>
     );
 };
 

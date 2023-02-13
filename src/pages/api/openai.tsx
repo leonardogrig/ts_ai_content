@@ -18,8 +18,8 @@ const generateArticle = async (captionsString: string, dynamicMaxLength: number)
     presence_penalty: 0
   });
 
-  const textData = response.data.choices[0]['text'].replace(/\n/g, '<br/>');
-
+  const textData = response.data.choices[0]['text']!.replace(/\n/g, '<br/>');
+  
   return textData;
 };
 
@@ -37,15 +37,17 @@ export default async function handler(req: Request, res: Response) {
         lang: 'pt'
       });
 
-      const captions = subtitles.map(caption => caption.text);
+      const captions = subtitles.map((caption: { text: any; }) => caption.text);
 
       let captionsString = captions.join(' ');
 
       captionsString = `"${captionsString}"`;
 
-      const stringLength = captionsString.length;
+      const stringLength:number = captionsString.length;
 
-      const dynamicMaxLength = parseInt(4000 - (stringLength / 2.5));
+      const dynamicMaxLength = Math.floor(4000 - (stringLength / 2.5));
+
+      console.log(dynamicMaxLength)
 
       const article = await generateArticle(captionsString, dynamicMaxLength);
 
