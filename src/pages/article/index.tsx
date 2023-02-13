@@ -1,75 +1,103 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import * as articleS from "./styles";
-import Head from "next/head";
+import Image from "next/image";
+import loadingImage from "./../utils/loader.gif";
+import { BiLoaderAlt } from "react-icons/bi";
+import youtubeThumbnail from "youtube-thumbnail";
+
+console.log(loadingImage);
 
 function getYoutubeVideoId(url: string) {
-    const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
+  const regExp =
+    /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
 
-    if (match && match[2].length === 11) {
-        return match[2];
-    }
-    return null;
+  if (match && match[2].length === 11) {
+    return match[2];
+  }
+  return null;
 }
 
+async function getYoutubeThumbnail(url: string) {
+  var thumbnail = await youtubeThumbnail(url);
+  console.log("thumbnail", thumbnail["high"]["url"]);
+  return thumbnail["high"]["url"];
+}
 
 const App = () => {
+  const [message, setMessage] = useState("");
+  const [response, setResponse] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [stringLength, setStringLength] = useState(0);
 
-    const [message, setMessage] = useState("");
-    const [response, setResponse] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [stringLength, setStringLength] = useState(0);
+  const [videoThumb, setVideoThumb] = useState("");
 
-    useEffect(() => {
-        setStringLength(response.length);
-        console.log(response);
-    }, [response]);
+  useEffect(() => {
+    setStringLength(response.length);
+    console.log(response);
+  }, [response]);
 
-    const handleSubmit = async (event: { preventDefault: () => void; }) => {
-        setLoading(true);
-        event.preventDefault();
+  const handleSubmit = async (event: { preventDefault: () => void }) => {
+    setLoading(true);
+    event.preventDefault();
 
-        const videoId = getYoutubeVideoId(message);
+    setResponse("");
 
-        if (!videoId) {
-            setResponse("Invalid URL.");
-            setLoading(false);
-            return;
-        }
+    setVideoThumb(await getYoutubeThumbnail(message));
 
-        try {
-            const { data } = await axios.post("/api/openai", {
-                chat: videoId,
-            });
+    const videoId = getYoutubeVideoId(message);
 
-            setResponse(data);
+    console.log(videoId);
 
-        } catch (error) {
-            setResponse("An error occurred." + error);
-        }
+    if (!videoId) {
+      setResponse("Invalid URL.");
+      setLoading(false);
+      return;
+    }
 
-        setLoading(false);
-    };
+    try {
+      const { data } = await axios.post("/api/openai", {
+        chat: videoId,
+      });
 
-    return (
-        <>
-        <articleS.Container>
-            <articleS.TextArea
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-            />
-            {loading ? (
-                <articleS.Button disabled>Carregando...</articleS.Button>
-            ) : (
-                <articleS.Button onClick={handleSubmit}>Enviar</articleS.Button>
-            )}
+      setResponse(data);
+    } catch (error) {
+      setResponse("An error occurred." + error);
+    }
 
-            <articleS.Content dangerouslySetInnerHTML={{ __html: response }}></articleS.Content>
-            <articleS.StringLength>String length: {stringLength}</articleS.StringLength>
-        </articleS.Container>
-        </>
-    );
+    setLoading(false);
+  };
+
+  return (
+    <>
+      <articleS.Container>
+        <articleS.TextArea
+          value={message}
+          onChange={(event) => setMessage(event.target.value)}
+        />
+        {loading ? (
+          <BiLoaderAlt className="spinner" color="#FFF" size={50} />
+        ) : (
+          <articleS.Button onClick={handleSubmit}>Enviar</articleS.Button>
+        )}
+        <Image
+          src={videoThumb}
+          alt="Picture of the author"
+          width={280}
+          height={180}
+
+          style={{ display: videoThumb ? "block" : "none", marginTop: 20 }}
+        />
+        <articleS.Content
+          dangerouslySetInnerHTML={{ __html: response }}
+        ></articleS.Content>
+        <articleS.StringLength>
+          String length: {stringLength}
+        </articleS.StringLength>
+      </articleS.Container>
+    </>
+  );
 };
 
 export default App;

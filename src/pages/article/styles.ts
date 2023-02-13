@@ -1,5 +1,5 @@
 
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 
 export const Container = styled.div`
   display: flex;
@@ -14,11 +14,13 @@ export const TextArea = styled.textarea`
   padding: 10px;
   font-size: 16px;
   margin-bottom: 20px;
+  color: white;
+  background-color: black;
 `;
 
 export const Button = styled.button`
   padding: 10px 20px;
-  background-color: #4CAF50;
+  background-color: #E9BC1B;
   color: white;
   border: none;
   border-radius: 5px;
@@ -30,7 +32,7 @@ export const Button = styled.button`
   }
 
   &:not(:disabled):hover {
-    background-color: #3e8e41;
+    background-color: #DD972B;
   }
 `;
 
@@ -38,7 +40,7 @@ export const Content = styled.div`
   width: 50%;
   margin-top: 20px;
   padding: 20px;
-  background-color: #f2f2f2;
+  background-color: #f9c901;
   border-radius: 5px;
   color: black;
   font-family: 'Arial';
@@ -48,4 +50,11 @@ export const StringLength = styled.p`
   margin-top: 20px;
   font-size: 18px;
   font-family: 'Arial';
+  color: white;
+`;
+
+
+export const LoadingImage = styled.img`
+  width: 40px;
+  height: 40px;
 `;

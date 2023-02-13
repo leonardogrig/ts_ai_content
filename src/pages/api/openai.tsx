@@ -1,25 +1,29 @@
 import { Configuration, OpenAIApi } from "openai";
-import { getSubtitles } from 'youtube-captions-scraper';
-import express, {Request, Response} from 'express';
+import { getSubtitles } from "youtube-captions-scraper";
+import express, { Request, Response } from "express";
 
-const generateArticle = async (captionsString: string, dynamicMaxLength: number): Promise<string> => {
+const generateArticle = async (
+  captionsString: string,
+  dynamicMaxLength: number
+): Promise<string> => {
   const configuration = new Configuration({
-    apiKey: process.env.API_KEY,
+    apiKey: process.env.OPENAI_API_KEY,
   });
   const openai = new OpenAIApi(configuration);
 
   const response = await openai.createCompletion({
     model: "text-davinci-003",
     prompt: `Produza um artigo completo para wordpress, com headers, subheaders, "/n" entre os parágrafos e no mínimo 2000 caracteres, em português do texto entre aspas. Eu sou o autor dele, então gostaria que fosse escrito em primeira pessoa. Este é o texto:\n\n "${captionsString}"`,
-    temperature: 0,
+    temperature: 0.3,
     max_tokens: dynamicMaxLength,
     top_p: 1,
     frequency_penalty: 0,
-    presence_penalty: 0
+    presence_penalty: 0,
   });
 
-  const textData = response.data.choices[0]['text']!.replace(/\n/g, '<br/>');
-  
+
+  const textData = response.data.choices[0]["text"]!.replace(/\n/g, "<br/>");
+
   return textData;
 };
 
@@ -34,22 +38,37 @@ export default async function handler(req: Request, res: Response) {
     if (chat) {
       const subtitles = await getSubtitles({
         videoID: chat,
-        lang: 'pt'
+        lang: "pt",
       });
 
-      const captions = subtitles.map((caption: { text: any; }) => caption.text);
+      console.log(subtitles);
 
-      let captionsString = captions.join(' ');
+      const captions = subtitles.map((caption: { text: any }) => caption.text);
+
+      let captionsString = captions.join(" ");
 
       captionsString = `"${captionsString}"`;
 
-      const stringLength:number = captionsString.length;
+      const blockSize = 3000;
 
-      const dynamicMaxLength = Math.floor(4000 - (stringLength / 2.5));
+      let startIndex = 0;
+      let endIndex = blockSize;
+      let article = "";
 
-      console.log(dynamicMaxLength)
+      while (startIndex < captionsString.length) {
+        let block = captionsString.substring(startIndex, endIndex);
+        
+        if (endIndex > captionsString.length) {
+          endIndex = captionsString.length;
+        }
 
-      const article = await generateArticle(captionsString, dynamicMaxLength);
+        const dynamicMaxLength = Math.floor(4000 - block.length / 2.5);
+        article += await generateArticle(block, dynamicMaxLength);
+
+        startIndex = endIndex;
+        endIndex += blockSize;
+      
+      }
 
       if (article) {
         res.json(article);
