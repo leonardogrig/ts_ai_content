@@ -13,8 +13,8 @@ const generateArticle = async (
 
   const response = await openai.createCompletion({
     model: "text-davinci-003",
-    prompt: `Produza um artigo completo para wordpress, com headers, subheaders, "/n" entre os parágrafos e no mínimo 2000 caracteres, em português do texto entre aspas. Eu sou o autor dele, então gostaria que fosse escrito em primeira pessoa. Este é o texto:\n\n "${captionsString}"`,
-    temperature: 0.3,
+    prompt: `Produza um artigo completo para wordpress, com headers entre <h2></h2>, no mínimo 2000 caracteres, em português, do texto entre aspas a seguir. Eu sou o autor dele, então gostaria que fosse escrito em primeira pessoa.  Este é o texto:\n\n "${captionsString}"`,
+    temperature: 0.7,
     max_tokens: dynamicMaxLength,
     top_p: 1,
     frequency_penalty: 0,
@@ -41,13 +41,10 @@ export default async function handler(req: Request, res: Response) {
         lang: "pt",
       });
 
-      console.log(subtitles);
 
       const captions = subtitles.map((caption: { text: any }) => caption.text);
 
       let captionsString = captions.join(" ");
-
-      captionsString = `"${captionsString}"`;
 
       const blockSize = 3000;
 
@@ -57,7 +54,7 @@ export default async function handler(req: Request, res: Response) {
 
       while (startIndex < captionsString.length) {
         let block = captionsString.substring(startIndex, endIndex);
-        
+
         if (endIndex > captionsString.length) {
           endIndex = captionsString.length;
         }
@@ -67,7 +64,7 @@ export default async function handler(req: Request, res: Response) {
 
         startIndex = endIndex;
         endIndex += blockSize;
-      
+
       }
 
       if (article) {
