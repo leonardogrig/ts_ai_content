@@ -98,7 +98,7 @@ const App = () => {
             alt="Picture of the author"
             width={280}
             height={180}
-            style={{marginTop: '20px'}}
+            style={{marginTop: '20px', border: '1px solid #000'}}
           />
         ) : (<></>
         )}

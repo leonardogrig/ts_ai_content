@@ -12,6 +12,7 @@ body {
 }
 
 body {
+  font-family: 'Open Sans', sans-serif;
   margin-top: 30px;
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
@@ -41,6 +42,6 @@ a {
 }
 
 h2, h4, b{
-  font-family: 'Open Sans', sans-serif;
+  
   display: contents;
 }
