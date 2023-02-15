@@ -1,9 +1,9 @@
 import { Configuration, OpenAIApi } from "openai";
 import { getSubtitles } from "youtube-captions-scraper";
-import express, { Request, Response } from "express";
+import { Request, Response } from "express";
 
 const generateArticle = async (
-  captionsString: string,
+  prompt: string,
   dynamicMaxLength: number
 ): Promise<string> => {
   const configuration = new Configuration({
@@ -13,14 +13,13 @@ const generateArticle = async (
 
   const response = await openai.createCompletion({
     model: "text-davinci-003",
-    prompt: `Produza um artigo completo para wordpress, com headers entre <h2></h2>, no mínimo 2000 caracteres, em português, do texto entre aspas a seguir. Eu sou o autor dele, então gostaria que fosse escrito em primeira pessoa.  Este é o texto:\n\n "${captionsString}"`,
+    prompt: prompt,
     temperature: 0.7,
     max_tokens: dynamicMaxLength,
     top_p: 1,
     frequency_penalty: 0,
     presence_penalty: 0,
   });
-
 
   const textData = response.data.choices[0]["text"]!.replace(/\n/g, "<br/>");
 
@@ -41,30 +40,70 @@ export default async function handler(req: Request, res: Response) {
         lang: "pt",
       });
 
-
       const captions = subtitles.map((caption: { text: any }) => caption.text);
 
       let captionsString = captions.join(" ");
 
-      const blockSize = 3000;
+      const blockSize = 2000;
 
       let startIndex = 0;
       let endIndex = blockSize;
       let article = "";
+      let previousBlock = "";
 
+      let iteration = 0;
       while (startIndex < captionsString.length) {
-        let block = captionsString.substring(startIndex, endIndex);
 
-        if (endIndex > captionsString.length) {
-          endIndex = captionsString.length;
+        console.log("Iteration: " + iteration)
+        iteration++;
+
+        // do only in first iteration
+        if (startIndex === 0) {
+          let firstBlock = captionsString.substring(startIndex, endIndex);
+
+          console.log("First block: " + firstBlock);
+
+          const prompt = `Produza um artigo completo para wordpress, no mínimo 2000 caracteres e em português, do texto entre aspas a seguir. Eu sou o autor dele, então gostaria que fosse escrito em primeira pessoa. Este é o texto:\n "${firstBlock}"\n`;
+
+          const dynamicMaxLength = Math.floor(4000 - prompt.length / 2.5);
+
+          previousBlock = await generateArticle(prompt, dynamicMaxLength);
+          // get only last 1000 characters of the previousBlock variable
+          if (previousBlock.length > 1000) {
+            previousBlock = previousBlock.substring(
+              previousBlock.length - 1000
+            );
+          }
+
+          console.log("First result: ", previousBlock)
+          article += previousBlock;
+          startIndex = endIndex;
+          endIndex += blockSize;
+        } else {
+          let block = captionsString.substring(startIndex, endIndex);
+
+          console.log("Block: "+ iteration + " ... " + block)
+
+          const prompt = `
+           Sua última resposta foi: "${previousBlock}", não repita o texto anterior. Continue reestruturando e produzindo um artigo, em português. Sou o autor do texto, portanto gostaria que fosse escrito em primeira pessoa. Este é o texto que precisa ser reescrito:\n "${block}"\n`;
+
+          if (endIndex > captionsString.length) {
+            endIndex = captionsString.length;
+          }
+
+          const dynamicMaxLength = Math.floor(4000 - prompt.length / 2.5);
+          previousBlock = await generateArticle(prompt, dynamicMaxLength);
+
+          if (previousBlock.length > 1000) {
+            previousBlock = previousBlock.substring(
+              previousBlock.length - 1000
+            );
+          }
+          console.log("Result: ", previousBlock);
+          article += previousBlock;
+          startIndex = endIndex;
+          endIndex += blockSize;
         }
-
-        const dynamicMaxLength = Math.floor(4000 - block.length / 2.5);
-        article += await generateArticle(block, dynamicMaxLength);
-
-        startIndex = endIndex;
-        endIndex += blockSize;
-
       }
 
       if (article) {
