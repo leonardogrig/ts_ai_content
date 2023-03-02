@@ -54,16 +54,13 @@ export default async function handler(req: Request, res: Response) {
       let iteration = 0;
       while (startIndex < captionsString.length) {
 
-        console.log("Iteration: " + iteration)
         iteration++;
 
         // do only in first iteration
         if (startIndex === 0) {
           let firstBlock = captionsString.substring(startIndex, endIndex);
 
-          console.log("First block: " + firstBlock);
-
-          const prompt = `Produza um artigo completo para wordpress, no mínimo 2000 caracteres e em português, do texto entre aspas a seguir. Eu sou o autor dele, então gostaria que fosse escrito em primeira pessoa. Este é o texto:\n "${firstBlock}"\n`;
+          const prompt = `Produza um artigo completo para wordpress, no mínimo 2000 caracteres e em português, do texto entre aspas a seguir. Eu sou o autor dele, então gostaria que fosse escrito em primeira pessoa. Este é o texto:\n <<${firstBlock}>>\n\n`;
 
           const dynamicMaxLength = Math.floor(4000 - prompt.length / 2.5);
 
@@ -75,17 +72,14 @@ export default async function handler(req: Request, res: Response) {
             );
           }
 
-          console.log("First result: ", previousBlock)
           article += previousBlock;
           startIndex = endIndex;
           endIndex += blockSize;
         } else {
           let block = captionsString.substring(startIndex, endIndex);
 
-          console.log("Block: "+ iteration + " ... " + block)
-
           const prompt = `
-           Sua última resposta foi: "${previousBlock}", não repita o texto anterior. Continue reestruturando e produzindo um artigo, em português. Sou o autor do texto, portanto gostaria que fosse escrito em primeira pessoa. Este é o texto que precisa ser reescrito:\n "${block}"\n`;
+           Sua última resposta foi: <<${previousBlock}>>, não repita o texto anterior. Continue reestruturando e produzindo um artigo, em português. Sou o autor do texto, portanto gostaria que fosse escrito em primeira pessoa. Este é o texto que precisa ser reescrito: <<${block}>>\n\n`;
 
           if (endIndex > captionsString.length) {
             endIndex = captionsString.length;
@@ -99,7 +93,7 @@ export default async function handler(req: Request, res: Response) {
               previousBlock.length - 1000
             );
           }
-          console.log("Result: ", previousBlock);
+          
           article += previousBlock;
           startIndex = endIndex;
           endIndex += blockSize;

@@ -28,6 +28,10 @@ async function getYoutubeThumbnail(url: string) {
 
 const App = () => {
   const [message, setMessage] = useState("");
+
+  const [chapterResponse, setChapterResponse] = useState("");
+  const [ chapterLoading, setChapterLoading ] = useState(false);
+
   const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
   const [stringLength, setStringLength] = useState(0);
@@ -54,16 +58,45 @@ const App = () => {
     }
 
     try {
-      const { data } = await axios.post("/api/openai", {
+      const { data } = await axios.post("/api/articlechunks", {
         chat: videoId,
       });
 
       setResponse(data);
     } catch (error) {
-      setResponse("An error occurred." + error);
+      setResponse("Ocorreu um erro." + error);
     }
 
     setLoading(false);
+  };
+
+
+  const handleChapters = async (event: { preventDefault: () => void }) => {
+    setChapterLoading(true);
+    event.preventDefault();
+
+    setChapterResponse("");
+
+    const videoId = getYoutubeVideoId(message);
+    setVideoThumb(await getYoutubeThumbnail(message));
+
+    if (!videoId) {
+      setChapterResponse("Link Invalido.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data } = await axios.post("/api/chapters", {
+        chat: videoId,
+      });
+
+      setChapterResponse(data);
+    } catch (error) {
+      setChapterResponse("Ocorreu um erro." + error);
+    }
+
+    setChapterLoading(false);
   };
 
   return (
@@ -87,9 +120,16 @@ const App = () => {
       <S.Container>
 
         {loading ? (
+          <BiLoaderAlt style={{marginBottom:'50px'}}  className="spinner" color="#FFF" size={50} />
+        ) : (
+          <S.Button style={{marginBottom:'50px'}} onClick={handleSubmit}>Faça meu artigo!</S.Button>
+        )}
+
+
+        {chapterLoading ? (
           <BiLoaderAlt className="spinner" color="#FFF" size={50} />
         ) : (
-          <S.Button onClick={handleSubmit}>Faça meu artigo!</S.Button>
+          <S.Button onClick={handleChapters}>Faça minha Minutagem!</S.Button>
         )}
 
         {videoThumb ? (
@@ -98,10 +138,17 @@ const App = () => {
             alt="Picture of the author"
             width={280}
             height={180}
-            style={{marginTop: '20px', border: '1px solid #000'}}
+            style={{ marginTop: '20px', border: '1px solid #000' }}
           />
         ) : (<></>
         )}
+        {chapterResponse ? (
+          <>
+            <S.Content
+              dangerouslySetInnerHTML={{ __html: chapterResponse }}
+            ></S.Content>
+          </>
+        ) : (<></>)}
         {response ? (
           <>
             <S.Content
