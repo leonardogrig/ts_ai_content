@@ -2,6 +2,48 @@ import { Configuration, OpenAIApi } from "openai";
 import { getSubtitles } from "youtube-captions-scraper";
 import { Request, Response } from "express";
 
+
+function formatString(str: string) {
+    // Replace any tags that are not <br> with an empty string
+    str = str.replace(/<(?!br\s*\/?)[^>]+>/gi, '');
+  
+    // Split the string into paragraphs using <br> tags as the delimiter
+    let paragraphs = str.split(/<br\s*\/?>/gi);
+  
+    // Loop through each paragraph and count the number of phrases
+    for (let i = 0; i < paragraphs.length; i++) {
+      let phrases = paragraphs[i].split(/[.?!]+/g);
+      let numPhrases = phrases.filter(Boolean).length;
+  
+      // If the paragraph has more than 3 phrases, add a single <br/> tag before and after it
+      if (numPhrases > 3) {
+        paragraphs[i] = '<br/>' + paragraphs[i] + '<br/>';
+      }
+    }
+  
+    // Join the paragraphs back into a single string
+    str = paragraphs.join('<br/>');
+  
+    
+    
+    // Replace any tags that are not <br> with an empty string
+    str = str.replace(/<(?!br\s*\/?)[^>]+>/gi, '');
+  
+    // Replace any groups of more than two <br> tags with exactly two
+    str = str.replace(/(<br\s*\/?>){3,}/gi, '<br/><br/>');
+    
+    // Replace any remaining groups of two <br> tags with exactly two
+    str = str.replace(/(<br\s*\/?>){2,}/gi, '<br/><br/>');
+    
+    
+    
+    // Remove any leading or trailing whitespace
+    str = str.trim();
+  
+    return str;
+  }
+  
+
 const generateArticle = async (
     prompt: string,
     dynamicMaxLength: number
@@ -14,7 +56,7 @@ const generateArticle = async (
     const response = await openai.createCompletion({
         model: "text-davinci-003",
         prompt: prompt,
-        temperature: 1,
+        temperature: 0.5,
         max_tokens: dynamicMaxLength,
         top_p: 1,
         frequency_penalty: 0,
@@ -133,10 +175,8 @@ export default async function handler(req: Request, res: Response) {
             }
 
 
-
-
             if (article) {
-                res.json(article);
+                res.json(formatString(article));
             } else {
                 res.status(500).send("Oops, Something went wrong!!");
             }
