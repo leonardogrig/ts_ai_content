@@ -40,7 +40,6 @@ export default async function handler(req: Request, res: Response) {
                 lang: "pt",
             });
 
-            // console.log(subtitles);
 
             const traditionalData = subtitles.map((item: { start: any; text: any; }, index: any) => {
                 const startTime = item.start;
@@ -65,20 +64,11 @@ export default async function handler(req: Request, res: Response) {
                 return resultArray;
             }, []);
 
-            // console.log(chunks);
-
-            console.log("chunks size ", chunks.length);
-
-            //get last timeSTR from traditionalData
-            const lastTimeStr = traditionalData[traditionalData.length - 1].split("\n")[0];
-
-            // get only the minutes from lastTimeStr
-            const lastTimeStrMinutes = lastTimeStr.split(":")[1];
-
-            // get 110% value of lastTimeStrMinutes
-            const lastTimeStrMinutes110 = Math.floor(lastTimeStrMinutes * 1.2);
-
             let fullChapter = "";
+
+            let previousChunk = [];
+            let secondChunk = "";
+            let counter = 0;
 
             //loop through chunks
             for (const chunk of chunks) {
@@ -86,98 +76,182 @@ export default async function handler(req: Request, res: Response) {
                 // make chunk string
                 const chunkString = chunk.join("\n");
 
-                const prompt = `Gere títulos de capítulos do YouTube a partir das seguintes transcrições.
+                let prompt = `Gere títulos de capítulos do YouTube a partir das seguintes transcrições.\n\n
 
-                TRANSCRIÇÃO:
-                00:00:00
+                TRANSCRIÇÃO:\n
+                <<00:00
                 e quando você fala que a pessoa tem que
-                00:00:01
+                00:01
                 ser perfeita ela não vai conseguir não é
-                00:00:04
+                00:04
                 porque ela sabe que ela é iniciante Ela
-                00:00:05
+                00:05
                 sabe que ela não vai ser perfeito Ela
-                00:00:07
+                00:07
                 sabe que ela vai dar permitam-se serem
-                00:00:10
+                00:10
                 ruins para ir você ser bom permita-se
-                00:00:14
+                00:14
                 cair enquanto você tá aprendendo andar
-                00:00:16
+                00:16
                 antes de correr você vai cair antes de
-                00:00:19
+                00:19
                 correr você é um bebê Você Nunca andou
-                00:00:22
+                00:22
                 você tem que engatinhar antes e depois
-                00:00:24
+                00:24
                 de engatinhar você dá os primeiros
-                00:00:25
+                00:25
                 passos meio vacilante mil toques daí
-                00:00:28
+                00:28
                 você começa a ter mais firmeza e daí
-                00:00:30
+                00:30
                 depois eu tenho que você começa a ter
-                00:00:31
+                00:31
                 controle sobre esse tá fazendo e corre é
-                00:00:34
+                00:34
                 a quantidade que leva a qualidade todo o
-                00:00:37
+                00:37
                 resto é gente com os costumes redutor
-                00:00:40
+                00:40
                 falando assim você não precisa fazer
-                00:00:42
+                00:42
                 tanto você não precisa fazer isso
-                00:00:44
-                precisa fazer aquilo vem aqui compra o
+                00:44
+                precisa fazer aquilo vem aqui compra o>>\n\n
                 
-                TÍTULO DO CAPÍTULO: 00:00 - Permita-se Cair Enquanto Está Aprendendo
+                TÍTULO DO CAPÍTULO: 00:00 - Permita-se cair enquanto está aprendendo\n\n
                 
-                TRANSCRIÇÃO:
-                00:00:48
+                TRANSCRIÇÃO:\n
+                <<00:48
                 ansiedade lá por favor por favor
-                00:00:51
+                00:51
                 sejam honestos na com os cursos que
-                00:00:54
+                00:54
                 vocês tenham sou honesto eu não
-                00:00:55
+                00:55
                 romantizo né a Paulo daí levantaram
-                00:00:58
+                00:58
                 assim a uma uns ir já faz cinco
-                00:01:01
+                01:01
                 cirurgias por dia é um cirurgião que não
-                00:01:04
+                01:04
                 tem tempo de postar porque senão a
-                00:01:06
+                01:06
                 função dele perfeito o cirurgião que vai
-                00:01:08
+                01:08
                 cinco cirurgias por dia me parece ainda
-                00:01:10
+                01:10
                 um bom dinheiro se ele quer mais
-                00:01:12
+                01:12
                 cirurgias e mais pacientes ele que
-                00:01:14
+                01:14
                 contrate uma estrategista ele de
-                00:01:16
+                01:16
                 contrate um profissional para ajudar ele
-                00:01:18
+                01:18
                 na elaboração EA produção desses
-                00:01:20
+                01:20
                 conteúdos é simples Fala Paulo mas eu
-                00:01:22
+                01:22
                 tenho outra profissão e eu não tenho
-                00:01:24
+                01:24
                 dinheiro como é que eu faço Aceite o
-                00:01:26
+                01:26
                 desequilíbrio Essa visão romântica de
-                00:01:28
-                que a eu não vou ter tempo para mim se
+                01:28
+                que a eu não vou ter tempo para mim se>>\n\n
                 
-                TÍTULO DO CAPÍTULO: 00:48 - Sejam Honestos Na Com Os Cursos Que Vocês Tenham
+                TÍTULO DO CAPÍTULO: 00:48 - Sejam honestos com os cursos de vocês\n\n
                 
-                TRANSCRIÇÃO:
+                TRANSCRIÇÃO:\n
+                <<${chunkString}>>\n\n
+                
+                TÍTULO DO CAPÍTULO:\n`;
+
+                // if second itteration of for loop
+                if (counter == 1) {
+                    const firstChunkString = chunks[0].join("\n");
+
+                    prompt = `Gere títulos de capítulos do YouTube a partir das seguintes transcrições.\n\n
+
+                TRANSCRIÇÃO:\n
+                ${firstChunkString}\n\n
+                
+                TÍTULO DO CAPÍTULO: ${previousChunk[previousChunk.length - 1]}\n\n
+                
+                TRANSCRIÇÃO:\n
+                <<00:48
+                ansiedade lá por favor por favor
+                00:51
+                sejam honestos na com os cursos que
+                00:54
+                vocês tenham sou honesto eu não
+                00:55
+                romantizo né a Paulo daí levantaram
+                00:58
+                assim a uma uns ir já faz cinco
+                01:01
+                cirurgias por dia é um cirurgião que não
+                01:04
+                tem tempo de postar porque senão a
+                01:06
+                função dele perfeito o cirurgião que vai
+                01:08
+                cinco cirurgias por dia me parece ainda
+                01:10
+                um bom dinheiro se ele quer mais
+                01:12
+                cirurgias e mais pacientes ele que
+                01:14
+                contrate uma estrategista ele de
+                01:16
+                contrate um profissional para ajudar ele
+                01:18
+                na elaboração EA produção desses
+                01:20
+                conteúdos é simples Fala Paulo mas eu
+                01:22
+                tenho outra profissão e eu não tenho
+                01:24
+                dinheiro como é que eu faço Aceite o
+                01:26
+                desequilíbrio Essa visão romântica de
+                01:28
+                que a eu não vou ter tempo para mim se>>\n\n
+                
+                TÍTULO DO CAPÍTULO: 00:48 - Sejam honestos com os cursos de vocês\n\n
+                
+                
+                TRANSCRIÇÃO:\n
                 <<${chunkString}>>
                 
                 TÍTULO DO CAPÍTULO:`;
+
+                } else if (counter >= 2) {
+                    const firstChunkString = chunks[counter - 2].join("\n");
+                    const secondChunkString = chunks[counter - 1].join("\n");
+
+                    prompt = `Gere títulos de capítulos do YouTube a partir das seguintes transcrições.\n\n
+    
+                    TRANSCRIÇÃO:\n
+                    ${firstChunkString}\n\n
+                    
+                    TÍTULO DO CAPÍTULO: ${previousChunk[previousChunk.length - 2]}\n\n
+                    
+                    TRANSCRIÇÃO:\n
+                    <<${secondChunkString}>>\n\n
+                    
+                    TÍTULO DO CAPÍTULO: ${previousChunk[previousChunk.length - 1]}\n\n
+                    
+                    
+                    TRANSCRIÇÃO:\n
+                    <<${chunkString}>>\n\n
+                    
+                    TÍTULO DO CAPÍTULO:\n`;
+
+                    console.log("the prompt is: ", prompt)
+                }
 
                 const dynamicMaxLength = Math.floor(4000 - prompt.length / 2.5);
 
@@ -186,10 +260,15 @@ export default async function handler(req: Request, res: Response) {
                 let newChapter = await generateArticle(prompt, dynamicMaxLength);
 
 
+
+                //add newChapter to previousChunk
+                previousChunk.push(newChapter);
+
+
                 fullChapter += newChapter;
                 fullChapter += "<br/>";
 
-                console.log("newChapter", chunkString);
+                counter++;
             }
             if (fullChapter) {
                 res.json(fullChapter);

@@ -32,40 +32,54 @@ const App = () => {
   const [chapterResponse, setChapterResponse] = useState("");
   const [ chapterLoading, setChapterLoading ] = useState(false);
 
-  const [response, setResponse] = useState("");
+  const [articleResponse, setArticleResponse] = useState("");
   const [loading, setLoading] = useState(false);
-  const [stringLength, setStringLength] = useState(0);
 
+  const [ hashtagResponse, setHashTagResponse ] = useState("");
+
+  const [stringLength, setStringLength] = useState(0);
   const [videoThumb, setVideoThumb] = useState("");
 
   useEffect(() => {
-    setStringLength(response.length);
-  }, [response]);
+    setStringLength(articleResponse.length);
+  }, [articleResponse]);
 
   const handleSubmit = async (event: { preventDefault: () => void }) => {
     setLoading(true);
     event.preventDefault();
 
-    setResponse("");
+    setArticleResponse("");
 
     const videoId = getYoutubeVideoId(message);
     setVideoThumb(await getYoutubeThumbnail(message));
 
     if (!videoId) {
-      setResponse("Link Invalido.");
+      setArticleResponse("Link Invalido.");
       setLoading(false);
       return;
     }
 
     try {
-      const { data } = await axios.post("/api/articlechunks", {
+      const { data } = await axios.post("/api/article", {
         chat: videoId,
       });
 
-      setResponse(data);
+      setArticleResponse(data);
     } catch (error) {
-      setResponse("Ocorreu um erro." + error);
+      setArticleResponse("Ocorreu um erro." + error);
     }
+
+    // get hashtags
+    try {
+      const { data } = await axios.post("/api/hashtags", {
+        chat: articleResponse,
+      });
+
+      setHashTagResponse(data);
+    } catch (error) {
+      setHashTagResponse("Ocorreu um erro com as hashtags.");
+    }
+
 
     setLoading(false);
   };
@@ -98,6 +112,7 @@ const App = () => {
 
     setChapterLoading(false);
   };
+
 
   return (
     <>
@@ -142,6 +157,13 @@ const App = () => {
           />
         ) : (<></>
         )}
+        {hashtagResponse ? (
+          <>
+            <S.Content
+              dangerouslySetInnerHTML={{ __html: hashtagResponse }}
+            ></S.Content>
+          </>
+        ) : (<></>)}
         {chapterResponse ? (
           <>
             <S.Content
@@ -149,10 +171,10 @@ const App = () => {
             ></S.Content>
           </>
         ) : (<></>)}
-        {response ? (
+        {articleResponse ? (
           <>
             <S.Content
-              dangerouslySetInnerHTML={{ __html: response }}
+              dangerouslySetInnerHTML={{ __html: articleResponse }}
             ></S.Content>
             <S.StringLength>
               Quantidade de Caracteres: {stringLength}
