@@ -14,7 +14,7 @@ const generateArticle = async (
     const response = await openai.createCompletion({
         model: "text-davinci-003",
         prompt: prompt,
-        temperature: 1,
+        temperature: 0.3,
         max_tokens: dynamicMaxLength,
         top_p: 1,
         frequency_penalty: 0,
@@ -123,46 +123,46 @@ export default async function handler(req: Request, res: Response) {
                 TÍTULO DO CAPÍTULO: 00:00 - Permita-se cair enquanto está aprendendo\n\n
                 
                 TRANSCRIÇÃO:\n
-                <<00:48
+                <<01:00:48
                 ansiedade lá por favor por favor
-                00:51
+                01:00:51
                 sejam honestos na com os cursos que
-                00:54
+                01:00:54
                 vocês tenham sou honesto eu não
-                00:55
+                01:00:55
                 romantizo né a Paulo daí levantaram
-                00:58
+                01:00:58
                 assim a uma uns ir já faz cinco
-                01:01
+                01:01:01
                 cirurgias por dia é um cirurgião que não
-                01:04
+                01:01:04
                 tem tempo de postar porque senão a
-                01:06
+                01:01:06
                 função dele perfeito o cirurgião que vai
-                01:08
+                01:01:08
                 cinco cirurgias por dia me parece ainda
-                01:10
+                01:01:10
                 um bom dinheiro se ele quer mais
-                01:12
+                01:01:12
                 cirurgias e mais pacientes ele que
-                01:14
+                01:01:14
                 contrate uma estrategista ele de
-                01:16
+                01:01:16
                 contrate um profissional para ajudar ele
-                01:18
+                01:01:18
                 na elaboração EA produção desses
-                01:20
+                01:01:20
                 conteúdos é simples Fala Paulo mas eu
-                01:22
+                01:01:22
                 tenho outra profissão e eu não tenho
-                01:24
+                01:01:24
                 dinheiro como é que eu faço Aceite o
-                01:26
+                01:01:26
                 desequilíbrio Essa visão romântica de
-                01:28
+                01:01:28
                 que a eu não vou ter tempo para mim se>>\n\n
                 
-                TÍTULO DO CAPÍTULO: 00:48 - Sejam honestos com os cursos de vocês\n\n
+                TÍTULO DO CAPÍTULO: 01:00:48 - Sejam honestos com os cursos de vocês\n\n
                 
                 TRANSCRIÇÃO:\n
                 <<${chunkString}>>\n\n
