@@ -53,8 +53,7 @@ export default async function handler(req: Request, res: Response) {
 
       let iteration = 0;
       while (startIndex < captionsString.length) {
-
-        console.log("Iteration: " + iteration)
+        console.log("Iteration: " + iteration);
         iteration++;
 
         // do only in first iteration
@@ -67,22 +66,29 @@ export default async function handler(req: Request, res: Response) {
 
           const dynamicMaxLength = Math.floor(4000 - prompt.length / 2.5);
 
-          previousBlock = await generateArticle(prompt, dynamicMaxLength);
-          // get only last 1000 characters of the previousBlock variable
-          if (previousBlock.length > 1000) {
-            previousBlock = previousBlock.substring(
-              previousBlock.length - 1000
-            );
-          }
+          try {
+            previousBlock = await generateArticle(prompt, dynamicMaxLength);
+            // get only last 1000 characters of the previousBlock variable
+            if (previousBlock.length > 1000) {
+              previousBlock = previousBlock.substring(
+                previousBlock.length - 1000
+              );
+            }
 
-          console.log("First result: ", previousBlock)
-          article += previousBlock;
-          startIndex = endIndex;
-          endIndex += blockSize;
+            console.log("First result: ", previousBlock);
+            article += previousBlock;
+            startIndex = endIndex;
+            endIndex += blockSize;
+          } catch (error) {
+            console.log(error);
+            return res
+              .status(500)
+              .json({ message: "Oops, Something went wrong!!", error: error });
+          }
         } else {
           let block = captionsString.substring(startIndex, endIndex);
 
-          console.log("Block: "+ iteration + " ... " + block)
+          console.log("Block: " + iteration + " ... " + block);
 
           const prompt = `
            Sua última resposta foi: "${previousBlock}", não repita o texto anterior. Continue reestruturando e produzindo um artigo, em português. Sou o autor do texto, portanto gostaria que fosse escrito em primeira pessoa. Este é o texto que precisa ser reescrito:\n "${block}"\n`;
@@ -92,17 +98,25 @@ export default async function handler(req: Request, res: Response) {
           }
 
           const dynamicMaxLength = Math.floor(4000 - prompt.length / 2.5);
-          previousBlock = await generateArticle(prompt, dynamicMaxLength);
 
-          if (previousBlock.length > 1000) {
-            previousBlock = previousBlock.substring(
-              previousBlock.length - 1000
-            );
+          try {
+            previousBlock = await generateArticle(prompt, dynamicMaxLength);
+
+            if (previousBlock.length > 1000) {
+              previousBlock = previousBlock.substring(
+                previousBlock.length - 1000
+              );
+            }
+            console.log("Result: ", previousBlock);
+            article += previousBlock;
+            startIndex = endIndex;
+            endIndex += blockSize;
+          } catch (error) {
+            console.log(error);
+            return res
+              .status(500)
+              .json({ message: "Oops, Something went wrong!!", error: error });
           }
-          console.log("Result: ", previousBlock);
-          article += previousBlock;
-          startIndex = endIndex;
-          endIndex += blockSize;
         }
       }
 
